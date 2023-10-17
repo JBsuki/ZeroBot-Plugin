@@ -231,9 +231,9 @@ func (sql *fishdb) updateFishInfo(uid int64, number int) (residue int, err error
 		userInfo.Fish = 0
 		userInfo.Duration = time.Now().Unix()
 	}
-	if userInfo.Fish >= FishLimit {
-		return 0, nil
-	}
+	// if userInfo.Fish >= FishLimit {
+	// 	return 0, nil
+	// }
 	residue = number
 	if userInfo.Fish+number > FishLimit {
 		residue = FishLimit - userInfo.Fish
