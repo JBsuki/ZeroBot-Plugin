@@ -24,7 +24,7 @@ type fishdb struct {
 }
 
 // FishLimit 钓鱼次数上限
-const FishLimit = 50
+const FishLimit = 9999
 
 // version 规则版本号
 const version = "5.4.1"
@@ -231,9 +231,9 @@ func (sql *fishdb) updateFishInfo(uid int64, number int) (residue int, err error
 		userInfo.Fish = 0
 		userInfo.Duration = time.Now().Unix()
 	}
-	// if userInfo.Fish >= FishLimit {
-	// 	return 0, nil
-	// }
+	if userInfo.Fish >= FishLimit {
+		return 0, nil
+	}
 	residue = number
 	if userInfo.Fish+number > FishLimit {
 		residue = FishLimit - userInfo.Fish
