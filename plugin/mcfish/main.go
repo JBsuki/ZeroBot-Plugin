@@ -131,7 +131,7 @@ var (
 		DisableOnDefault: false,
 		Brief:            "钓鱼",
 		Help: "一款钓鱼模拟器\n----------指令----------\n" +
-			"- 钓鱼看板/钓鱼商店\n- 购买xxx\n- 购买xxx [数量]\n- 出售xxx\n- 出售xxx [数量]\n" +
+			"- 钓鱼看板/钓鱼商店\n- 购买xxx\n- 购买xxx [数量]\n- 出售xxx\n- 出售xxx [数量]\n- 出售所有垃圾\n" +
 			"- 钓鱼背包\n- 装备[xx竿|三叉戟|美西螈]\n- 附魔[诱钓|海之眷顾]\n- 修复鱼竿\n- 合成[xx竿|三叉戟]\n- 消除[绑定|宝藏]诅咒\n- 消除[绑定|宝藏]诅咒 [数量]\n" +
 			"- 进行钓鱼\n- 进行n次钓鱼\n- 当前装备概率明细\n" +
 			"规则V" + version + ":\n" +
@@ -146,7 +146,7 @@ var (
 			"5.鱼类信息:\n-> 鳕鱼 : 均价:10 上钩概率:0.69%\n-> 鲑鱼 : 均价:50 上钩概率:0.2%\n-> 热带鱼 : 均价:100 上钩概率:0.06%\n-> 河豚 : 均价:300 上钩概率:0.03%\n-> 鹦鹉螺 : 均价:500 上钩概率:0.01%\n-> 墨鱼 : 均价:500 上钩概率:0.01%\n" +
 			"6.垃圾:\n-> 均价:10 上钩概率:30%\n" +
 			"7.物品BUFF:\n-> 钓鱼佬 : 当背包名字含有'鱼'的物品数量超过100时激活,钓到物品概率提高至90%\n-> 修复大师 : 当背包鱼竿数量超过10时激活,修复物品时耐久百分百继承\n" +
-			"8.合成:\n-> 铁竿 : 3x木竿\n-> 金竿 : 3x铁竿\n-> 钻石竿 : 3x金竿\n-> 下界合金竿 : 3x钻石竿\n-> 三叉戟 : 3x下界合金竿\n注:合成成功率90%,继承附魔等级合/3的等级\n" +
+			"8.合成:\n-> 铁竿 : 3x木竿\n-> 金竿 : 3x铁竿\n-> 钻石竿 : 3x金竿\n-> 下界合金竿 : 3x钻石竿\n-> 三叉戟 : 3x下界合金竿\n注:合成成功率90%(包括梭哈),合成鱼竿的附魔等级=（附魔等级合/合成鱼竿数量）\n" +
 			"9.杂项:\n-> 无装备的情况下,每人最多可以购买3次100块钱的鱼竿\n-> 默认状态钓鱼上钩概率为60%(理论值!!!)\n-> 附魔的鱼竿会因附魔变得昂贵,每个附魔最高3级\n-> 三叉戟不算鱼竿,修复时可直接满耐久\n" +
 			"-> 鱼竿数量大于50的不能买东西;\n     鱼竿数量大于30的不能钓鱼;\n     每购/售10次鱼竿获得1层宝藏诅咒;\n     每购买20次物品将获得3次价格减半福利;\n     每钓鱼75次获得1本净化书;\n" +
 			"     每天最多只可出售5个鱼竿和购买15次物品;",
@@ -525,6 +525,26 @@ func (sql *fishdb) getNumberFor(uid int64, thing string) (number int, err error)
 	info := article{}
 	err = sql.db.FindFor(name, &info, "where Name glob '*"+thing+"*'", func() error {
 		number += info.Number
+		return nil
+	})
+	return
+}
+
+// 获取用户的某类物品信息
+func (sql *fishdb) getUserTypeInfo(uid int64, thingType string) (thingInfos []article, err error) {
+	name := strconv.FormatInt(uid, 10) + "Pack"
+	sql.Lock()
+	defer sql.Unlock()
+	userInfo := article{}
+	err = sql.db.Create(name, &userInfo)
+	if err != nil {
+		return
+	}
+	if !sql.db.CanFind(name, "where Type = '"+thingType+"'") {
+		return
+	}
+	err = sql.db.FindFor(name, &userInfo, "where Type = '"+thingType+"'", func() error {
+		thingInfos = append(thingInfos, userInfo)
 		return nil
 	})
 	return
