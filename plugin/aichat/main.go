@@ -23,19 +23,19 @@ import (
 )
 
 var (
-	api *deepinfra.API
-	en  = control.AutoRegister(&ctrl.Options[*zero.Ctx]{
-		DisableOnDefault: false,
-		Extra:            control.ExtraFromString("aichat"),
-		Brief:            "OpenAI聊天",
+	api *deepinfra。API
+	en  = control。AutoRegister(&ctrl。Options[*zero。Ctx]{
+		DisableOnDefault: false，
+		Extra:            control。ExtraFromString("aichat"),
+		Brief:            "OpenAI聊天"，
 		Help: "- 设置AI聊天触发概率10\n" +
 			"- 设置AI聊天温度80\n" +
 			"- 设置AI聊天密钥xxx\n" +
 			"- 设置AI聊天模型名xxx\n" +
 			"- 设置AI聊天系统提示词xxx\n" +
 			"- 设置AI聊天分隔符</think>(留空则清除)\n" +
-			"- 设置AI聊天(不)响应AT",
-		PrivateDataFolder: "aichat",
+			"- 设置AI聊天(不)响应AT"，
+		PrivateDataFolder: "aichat"，
 	})
 )
 
@@ -47,71 +47,71 @@ var (
 )
 
 func init() {
-	mf := en.DataFolder() + "model.txt"
-	sf := en.DataFolder() + "system.txt"
-	pf := en.DataFolder() + "sep.txt"
-	nf := en.DataFolder() + "NoReplyAT"
-	if file.IsExist(mf) {
-		data, err := os.ReadFile(mf)
+	mf := en。DataFolder() + "model.txt"
+	sf := en。DataFolder() + "system.txt"
+	pf := en。DataFolder() + "sep.txt"
+	nf := en。DataFolder() + "NoReplyAT"
+	if file。IsExist(mf) {
+		data, err := os。ReadFile(mf)
 		if err != nil {
-			logrus.Warnln("read model", err)
+			logrus。Warnln("read model", err)
 		} else {
 			modelname = string(data)
 		}
 	}
-	if file.IsExist(sf) {
-		data, err := os.ReadFile(sf)
+	if file。IsExist(sf) {
+		data, err := os。ReadFile(sf)
 		if err != nil {
-			logrus.Warnln("read system", err)
+			logrus。Warnln("read system", err)
 		} else {
 			systemprompt = string(data)
 		}
 	}
-	if file.IsExist(pf) {
-		data, err := os.ReadFile(pf)
+	if file。IsExist(pf) {
+		data, err := os。ReadFile(pf)
 		if err != nil {
-			logrus.Warnln("read sep", err)
+			logrus。Warnln("read sep", err)
 		} else {
 			sepstr = string(data)
 		}
 	}
-	noreplyat = file.IsExist(nf)
+	noreplyat = file。IsExist(nf)
 
-	en.OnMessage(func(ctx *zero.Ctx) bool {
-		return ctx.ExtractPlainText() != "" && (!noreplyat || (noreplyat && !ctx.Event.IsToMe))
-	}).SetBlock(false).Handle(func(ctx *zero.Ctx) {
-		gid := ctx.Event.GroupID
+	en。OnMessage(func(ctx *zero。Ctx) bool {
+		return ctx。ExtractPlainText() != "" && (!noreplyat || (noreplyat && !ctx。Event。IsToMe))
+	})。SetBlock(false)。Handle(func(ctx *zero。Ctx) {
+		gid := ctx。Event。GroupID
 		if gid == 0 {
-			gid = -ctx.Event.UserID
+			gid = -ctx。Event。UserID
 		}
-		c, ok := ctx.State["manager"].(*ctrl.Control[*zero.Ctx])
+		c, ok := ctx。State["manager"]。(*ctrl。Control[*zero。Ctx])
 		if !ok {
 			return
 		}
-		rate := c.GetData(gid)
+		rate := c。GetData(gid)
 		temp := (rate >> 8) & 0xff
 		rate &= 0xff
-		if !ctx.Event.IsToMe && rand.Intn(100) >= int(rate) {
+		if !ctx。Event。IsToMe && rand。Intn(100) >= int(rate) {
 			return
 		}
-		if ctx.Event.IsToMe {
-			ctx.Block()
+		if ctx。Event。IsToMe {
+			ctx。Block()
 		}
 		key := ""
-		err := c.GetExtra(&key)
+		err := c。GetExtra(&key)
 		if err != nil {
-			logrus.Warnln("ERROR: get extra err:", err)
+			logrus。Warnln("ERROR: get extra err:", err)
 			return
 		}
 		if key == "" {
-			logrus.Warnln("ERROR: get extra err: empty key")
+			logrus。Warnln("ERROR: get extra err: empty key")
 			return
 		}
-		var x deepinfra.API
+		var x deepinfra。API
 		y := &x
 		if api == nil {
-			x = deepinfra.NewAPI(deepinfra.APIDeepInfra, key)
-			atomic.StorePointer((*unsafe.Pointer)(unsafe.Pointer(&api)), unsafe.Pointer(&x))
+			x = deepinfra。NewAPI("https://api.siliconflow.cn/v1", key)
+			atomic。StorePointer((*unsafe。Pointer)(unsafe。Pointer(&api)), unsafe。Pointer(&x))
 		} else {
 			y = api
 		}
@@ -121,48 +121,48 @@ func init() {
 		if temp > 100 {
 			temp = 100
 		}
-		data, err := y.Request(chat.Ask(ctx, float32(temp)/100, modelname, systemprompt, sepstr))
+		data, err := y。Request(chat。Ask(ctx, float32(temp)/100, modelname, systemprompt, sepstr))
 		if err != nil {
-			logrus.Warnln("[niniqun] post err:", err)
+			logrus。Warnln("[niniqun] post err:", err)
 			return
 		}
-		txt := strings.Trim(data, "\n 　")
+		txt := strings。Trim(data, "\n 　")
 		if len(txt) > 0 {
-			chat.Reply(ctx, txt)
-			nick := zero.BotConfig.NickName[rand.Intn(len(zero.BotConfig.NickName))]
-			txt = strings.ReplaceAll(txt, "{name}", ctx.CardOrNickName(ctx.Event.UserID))
-			txt = strings.ReplaceAll(txt, "{me}", nick)
+			chat。Reply(ctx, txt)
+			nick := zero。BotConfig。NickName[rand。Intn(len(zero。BotConfig。NickName))]
+			txt = strings。ReplaceAll(txt, "{name}", ctx。CardOrNickName(ctx。Event。UserID))
+			txt = strings。ReplaceAll(txt, "{me}", nick)
 			id := any(nil)
-			if ctx.Event.IsToMe {
-				id = ctx.Event.MessageID
+			if ctx。Event。IsToMe {
+				id = ctx。Event。MessageID
 			}
-			for _, t := range strings.Split(txt, "{segment}") {
+			for _, t := range strings。Split(txt, "{segment}") {
 				if t == "" {
 					continue
 				}
 				if id != nil {
-					id = ctx.SendChain(message.Reply(id), message.Text(t))
+					id = ctx。SendChain(message。Reply(id), message。Text(t))
 				} else {
-					id = ctx.SendChain(message.Text(t))
+					id = ctx。SendChain(message。Text(t))
 				}
-				process.SleepAbout1sTo2s()
+				process。SleepAbout1sTo2s()
 			}
 		}
 	})
-	en.OnPrefix("设置AI聊天触发概率", zero.AdminPermission).SetBlock(true).Handle(func(ctx *zero.Ctx) {
-		args := strings.TrimSpace(ctx.State["args"].(string))
+	en。OnPrefix("设置AI聊天触发概率", zero。AdminPermission)。SetBlock(true)。Handle(func(ctx *zero。Ctx) {
+		args := strings。TrimSpace(ctx。State["args"]。(string))
 		if args == "" {
-			ctx.SendChain(message.Text("ERROR: empty args"))
+			ctx。SendChain(message。Text("ERROR: empty args"))
 			return
 		}
-		c, ok := ctx.State["manager"].(*ctrl.Control[*zero.Ctx])
+		c, ok := ctx。State["manager"]。(*ctrl。Control[*zero。Ctx])
 		if !ok {
-			ctx.SendChain(message.Text("ERROR: no such plugin"))
+			ctx。SendChain(message。Text("ERROR: no such plugin"))
 			return
 		}
-		r, err := strconv.Atoi(args)
+		r, err := strconv。Atoi(args)
 		if err != nil {
-			ctx.SendChain(message.Text("ERROR: parse rate err: ", err))
+			ctx。SendChain(message。Text("ERROR: parse rate err: ", err))
 			return
 		}
 		if r > 100 {
@@ -170,32 +170,32 @@ func init() {
 		} else if r < 0 {
 			r = 0
 		}
-		gid := ctx.Event.GroupID
+		gid := ctx。Event。GroupID
 		if gid == 0 {
-			gid = -ctx.Event.UserID
+			gid = -ctx。Event。UserID
 		}
-		val := c.GetData(gid) & (^0xff)
-		err = c.SetData(gid, val|int64(r&0xff))
+		val := c。GetData(gid) & (^0xff)
+		err = c。SetData(gid, val|int64(r&0xff))
 		if err != nil {
-			ctx.SendChain(message.Text("ERROR: set data err: ", err))
+			ctx。SendChain(message。Text("ERROR: set data err: ", err))
 			return
 		}
-		ctx.SendChain(message.Text("成功"))
+		ctx。SendChain(message。Text("成功"))
 	})
-	en.OnPrefix("设置AI聊天温度", zero.AdminPermission).SetBlock(true).Handle(func(ctx *zero.Ctx) {
-		args := strings.TrimSpace(ctx.State["args"].(string))
+	en。OnPrefix("设置AI聊天温度", zero。AdminPermission)。SetBlock(true)。Handle(func(ctx *zero。Ctx) {
+		args := strings。TrimSpace(ctx。State["args"]。(string))
 		if args == "" {
-			ctx.SendChain(message.Text("ERROR: empty args"))
+			ctx。SendChain(message。Text("ERROR: empty args"))
 			return
 		}
-		c, ok := ctx.State["manager"].(*ctrl.Control[*zero.Ctx])
+		c, ok := ctx。State["manager"]。(*ctrl。Control[*zero。Ctx])
 		if !ok {
-			ctx.SendChain(message.Text("ERROR: no such plugin"))
+			ctx。SendChain(message。Text("ERROR: no such plugin"))
 			return
 		}
-		r, err := strconv.Atoi(args)
+		r, err := strconv。Atoi(args)
 		if err != nil {
-			ctx.SendChain(message.Text("ERROR: parse rate err: ", err))
+			ctx。SendChain(message。Text("ERROR: parse rate err: ", err))
 			return
 		}
 		if r > 100 {
@@ -203,100 +203,100 @@ func init() {
 		} else if r < 0 {
 			r = 0
 		}
-		gid := ctx.Event.GroupID
+		gid := ctx。Event。GroupID
 		if gid == 0 {
-			gid = -ctx.Event.UserID
+			gid = -ctx。Event。UserID
 		}
-		val := c.GetData(gid) & (^0xff00)
-		err = c.SetData(gid, val|(int64(r&0xff)<<8))
+		val := c。GetData(gid) & (^0xff00)
+		err = c。SetData(gid, val|(int64(r&0xff)<<8))
 		if err != nil {
-			ctx.SendChain(message.Text("ERROR: set data err: ", err))
+			ctx。SendChain(message。Text("ERROR: set data err: ", err))
 			return
 		}
-		ctx.SendChain(message.Text("成功"))
+		ctx。SendChain(message。Text("成功"))
 	})
-	en.OnPrefix("设置AI聊天密钥", zero.OnlyPrivate, zero.SuperUserPermission).SetBlock(true).Handle(func(ctx *zero.Ctx) {
-		args := strings.TrimSpace(ctx.State["args"].(string))
+	en。OnPrefix("设置AI聊天密钥", zero。OnlyPrivate, zero。SuperUserPermission)。SetBlock(true)。Handle(func(ctx *zero。Ctx) {
+		args := strings。TrimSpace(ctx。State["args"]。(string))
 		if args == "" {
-			ctx.SendChain(message.Text("ERROR: empty args"))
+			ctx。SendChain(message。Text("ERROR: empty args"))
 			return
 		}
-		c, ok := ctx.State["manager"].(*ctrl.Control[*zero.Ctx])
+		c, ok := ctx。State["manager"]。(*ctrl。Control[*zero。Ctx])
 		if !ok {
-			ctx.SendChain(message.Text("ERROR: no such plugin"))
+			ctx。SendChain(message。Text("ERROR: no such plugin"))
 			return
 		}
-		err := c.SetExtra(&args)
+		err := c。SetExtra(&args)
 		if err != nil {
-			ctx.SendChain(message.Text("ERROR: ", err))
+			ctx。SendChain(message。Text("ERROR: ", err))
 			return
 		}
-		ctx.SendChain(message.Text("成功"))
+		ctx。SendChain(message。Text("成功"))
 	})
-	en.OnPrefix("设置AI聊天模型名", zero.OnlyPrivate, zero.SuperUserPermission).SetBlock(true).Handle(func(ctx *zero.Ctx) {
-		args := strings.TrimSpace(ctx.State["args"].(string))
+	en。OnPrefix("设置AI聊天模型名", zero。OnlyPrivate, zero。SuperUserPermission)。SetBlock(true)。Handle(func(ctx *zero。Ctx) {
+		args := strings。TrimSpace(ctx。State["args"]。(string))
 		if args == "" {
-			ctx.SendChain(message.Text("ERROR: empty args"))
+			ctx。SendChain(message。Text("ERROR: empty args"))
 			return
 		}
 		modelname = args
-		err := os.WriteFile(mf, []byte(args), 0644)
+		err := os。WriteFile(mf, []byte(args), 0644)
 		if err != nil {
-			ctx.SendChain(message.Text("ERROR: ", err))
+			ctx。SendChain(message。Text("ERROR: ", err))
 			return
 		}
-		ctx.SendChain(message.Text("成功"))
+		ctx。SendChain(message。Text("成功"))
 	})
-	en.OnPrefix("设置AI聊天系统提示词", zero.OnlyPrivate, zero.SuperUserPermission).SetBlock(true).Handle(func(ctx *zero.Ctx) {
-		args := strings.TrimSpace(ctx.State["args"].(string))
+	en。OnPrefix("设置AI聊天系统提示词", zero。OnlyPrivate, zero。SuperUserPermission)。SetBlock(true)。Handle(func(ctx *zero。Ctx) {
+		args := strings。TrimSpace(ctx。State["args"]。(string))
 		if args == "" {
-			ctx.SendChain(message.Text("ERROR: empty args"))
+			ctx。SendChain(message。Text("ERROR: empty args"))
 			return
 		}
 		systemprompt = args
-		err := os.WriteFile(sf, []byte(args), 0644)
+		err := os。WriteFile(sf, []byte(args), 0644)
 		if err != nil {
-			ctx.SendChain(message.Text("ERROR: ", err))
+			ctx。SendChain(message。Text("ERROR: ", err))
 			return
 		}
-		ctx.SendChain(message.Text("成功"))
+		ctx。SendChain(message。Text("成功"))
 	})
-	en.OnPrefix("设置AI聊天分隔符", zero.OnlyPrivate, zero.SuperUserPermission).SetBlock(true).Handle(func(ctx *zero.Ctx) {
-		args := strings.TrimSpace(ctx.State["args"].(string))
+	en。OnPrefix("设置AI聊天分隔符", zero。OnlyPrivate, zero。SuperUserPermission)。SetBlock(true)。Handle(func(ctx *zero。Ctx) {
+		args := strings。TrimSpace(ctx。State["args"]。(string))
 		if args == "" {
 			sepstr = ""
-			_ = os.Remove(pf)
-			ctx.SendChain(message.Text("清除成功"))
+			_ = os。Remove(pf)
+			ctx。SendChain(message。Text("清除成功"))
 			return
 		}
 		sepstr = args
-		err := os.WriteFile(pf, []byte(args), 0644)
+		err := os。WriteFile(pf, []byte(args), 0644)
 		if err != nil {
-			ctx.SendChain(message.Text("ERROR: ", err))
+			ctx。SendChain(message。Text("ERROR: ", err))
 			return
 		}
-		ctx.SendChain(message.Text("设置成功"))
+		ctx。SendChain(message。Text("设置成功"))
 	})
-	en.OnRegex("^设置AI聊天(不)?响应AT$", zero.OnlyPrivate, zero.SuperUserPermission).SetBlock(true).Handle(func(ctx *zero.Ctx) {
-		args := ctx.State["regex_matched"].([]string)
+	en。OnRegex("^设置AI聊天(不)?响应AT$", zero。OnlyPrivate, zero。SuperUserPermission)。SetBlock(true)。Handle(func(ctx *zero。Ctx) {
+		args := ctx。State["regex_matched"]。([]string)
 		isno := args[1] == "不"
 		if isno {
-			f, err := os.Create(nf)
+			f, err := os。Create(nf)
 			if err != nil {
-				ctx.SendChain(message.Text("ERROR: ", err))
+				ctx。SendChain(message。Text("ERROR: ", err))
 				return
 			}
-			defer f.Close()
-			_, err = f.WriteString("PLACEHOLDER")
+			defer f。Close()
+			_, err = f。WriteString("PLACEHOLDER")
 			if err != nil {
-				ctx.SendChain(message.Text("ERROR: ", err))
+				ctx。SendChain(message。Text("ERROR: ", err))
 				return
 			}
 			noreplyat = true
 		} else {
-			_ = os.Remove(nf)
+			_ = os。Remove(nf)
 			noreplyat = false
 		}
-		ctx.SendChain(message.Text("成功"))
+		ctx。SendChain(message。Text("成功"))
 	})
 }
