@@ -110,7 +110,7 @@ func init() {
 		var x deepinfra.API
 		y := &x
 		if api == nil {
-			x = deepinfra.NewAPI("https://api.siliconflow.cn/v1/openai/chat/completions", key)
+			x = deepinfra.NewAPI(deepinfra.APIDeepInfra, key)
 			atomic.StorePointer((*unsafe.Pointer)(unsafe.Pointer(&api)), unsafe.Pointer(&x))
 		} else {
 			y = api
